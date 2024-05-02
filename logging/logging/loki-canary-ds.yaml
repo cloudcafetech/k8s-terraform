@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  annotations:
+    deprecated.daemonset.template.generation: "1"
+    meta.helm.sh/release-name: loki
+    meta.helm.sh/release-namespace: logging
+  labels:
+    app.kubernetes.io/component: canary
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/name: loki
+  name: loki-canary
+  namespace: logging
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: canary
+      app.kubernetes.io/instance: loki
+      app.kubernetes.io/name: loki
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: canary
+        app.kubernetes.io/instance: loki
+        app.kubernetes.io/name: loki
+    spec:
+      containers:
+        - args:
+            - -addr=loki-gateway.logging.svc.cluster.local.:80
+            - -labelname=pod
+            - -labelvalue=$(POD_NAME)
+            - -push=true
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+          image: docker.io/grafana/loki-canary:3.0.0
+          imagePullPolicy: IfNotPresent
+          name: loki-canary
+          ports:
+            - containerPort: 3500
+              name: http-metrics
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /metrics
+              port: http-metrics
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      serviceAccount: loki-canary
+      serviceAccountName: loki-canary
+      terminationGracePeriodSeconds: 30
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate

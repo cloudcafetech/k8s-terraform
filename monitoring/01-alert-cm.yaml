@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubemon-alertmanager-config
+  labels:
+    app.kubernetes.io/name: kubemon
+    app.kubernetes.io/component: alertmanager
+data:
+  alertmanager.yml: |-
+    global: 
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'ttttttttt@gmail.com'
+      smtp_auth_username: 'ttttttttt@gmail.com'
+      smtp_auth_password: 'XXXXXXXX'
+      resolve_timeout: 5m
+    route:
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 3h
+      receiver: default-receiver
+      routes:
+      - match:
+          severity: restartpod
+        receiver: email-pod-restart
+      - match:
+          severity: scalepod
+        receiver: email-pod-scale
+    receivers:
+    - name: default-receiver 
+      email_configs:
+      - to: 'mymailid@test.com'
+        send_resolved: true
+      webhook_configs:
+      - url: http://automate-service.automate.svc.cluster.local:9000/hooks/kube-node-sn-hook        
+    - name: 'email-pod-restart'
+      email_configs:
+      - to: 'mymailid@test.com'
+        send_resolved: true
+      webhook_configs:
+      - url: http://automate-service.automate.svc.cluster.local:9000/hooks/kube-pod-restart-hook
+    - name: 'email-pod-scale'
+      email_configs:
+      - to: 'mymailid@test.com'
+        send_resolved: true
+      webhook_configs:
+      - url: http://automate-service.automate.svc.cluster.local:9000/hooks/kube-pod-scale-hook

@@ -1,0 +1,17 @@
+- hosts: all
+  name: fetch file
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: fetch kubeadm output file
+    ansible.builtin.fetch:
+      src: /home/k8sgcp/kubeadm-output.txt
+      dest: /root/k8s-terraform/kubeadm/
+      flat: yes
+      validate_checksum: false
+  - name: fetch kubeconfig file
+    ansible.builtin.fetch:
+      src: /home/k8sgcp/config
+      dest: /root/k8s-terraform/kubeadm/
+      flat: yes
+      validate_checksum: false

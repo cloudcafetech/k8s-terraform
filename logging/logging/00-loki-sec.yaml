@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: loki-minio-secret
+  namespace: logging
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+type: Opaque
+data:
+  # By default, admin is set to `admin2675`
+  MINIO_ACCESS_KEY_ID: YWRtaW4=
+  MINIO_SECRET_ACCESS_KEY: "YWRtaW4yNjc1"

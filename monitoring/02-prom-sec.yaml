@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secrect
+type: Opaque
+data:
+  # By default user admin and password admin2675
+  access_key: YWRtaW4=
+  secret_key: "YWRtaW4yNjc1"

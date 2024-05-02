@@ -1,0 +1,20 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: kubemon-prometheus
+  labels:
+    k8s-app: prometheus
+    app.kubernetes.io/name: kubemon
+    app.kubernetes.io/component: prometheus
+spec:
+  type: NodePort
+  ports:
+    # Exposes `http` and `TCP` ports `9090` using the default `ClusterIP` Service type
+    - name: http
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+      nodePort: 30090
+  sessionAffinity: ClientIP
+  selector:
+    k8s-app: prometheus

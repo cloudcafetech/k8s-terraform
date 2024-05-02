@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kubemon-prometheus
+  labels: &Labels
+    k8s-app: prometheus
+    app.kubernetes.io/name: kubemon
+    app.kubernetes.io/component: prometheus
+spec:
+  serviceName: "kubemon-prometheus"
+  replicas: 1
+  podManagementPolicy: "Parallel"
+  updateStrategy:
+    type: "RollingUpdate"
+  selector:
+    matchLabels: *Labels
+  template:
+    metadata:
+      labels: *Labels
+    spec:
+      serviceAccountName: prometheus
+      initContainers:
+      - name: "init-chown-data"
+        image: docker.io/debian:9
+        imagePullPolicy: Always
+        command: ["chown", "-R", "65534:65534", "/data"]
+        volumeMounts:
+        - name: kubemon-prometheus-data
+          mountPath: /data
+          subPath: ""
+      containers:
+        - name: prometheus-server
+          image: quay.io/prometheus/prometheus:v2.19.1
+          imagePullPolicy: "IfNotPresent"
+          args:
+            - --config.file=/etc/config/prometheus.yaml
+            - --storage.tsdb.path=/data
+            - --web.console.libraries=/etc/prometheus/console_libraries
+            - --web.console.templates=/etc/prometheus/consoles
+            - --storage.tsdb.retention.time=2d
+            - --storage.tsdb.min-block-duration=2h
+            - --storage.tsdb.max-block-duration=2h
+            - --web.enable-lifecycle
+            - --storage.tsdb.no-lockfile
+            - --web.external-url=http://prom.34.125.24.130.nip.io
+            - --web.route-prefix=/
+          ports:
+            - containerPort: 9090
+          # Probe the `/-/ready` and `/-/healthy` endpoints
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+          # Based on 10 running nodes with 30 pods each
+          # Resource requests of `200m` of CPU and `1000Mi` of memory
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1000Mi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: kubemon-prometheus-data
+              mountPath: /data
+              subPath: ""
+        - name: thanos
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534        
+          image: quay.io/thanos/thanos:v0.24.0
+          args:
+            - "sidecar"
+            - "--log.level=debug"
+            - "--tsdb.path=/data"
+            - "--prometheus.url=http://127.0.0.1:9090"
+            - "--grpc-address=[$(POD_IP)]:10901"
+            - "--http-address=[$(POD_IP)]:10902"
+            - "--objstore.config={'type': 'S3', 'config': {'endpoint': 'minio-svc.minio-store.svc.cluster.local:9000', 'bucket': 'promk8sminio', 'insecure': true}}"
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrect
+                  key: access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                 name: minio-secrect
+                 key: secret_key
+          ports:
+            - name: http-sidecar
+              containerPort: 10902
+            - name: grpc
+              containerPort: 10901
+          livenessProbe:
+              httpGet:
+                port: 10902
+                path: /-/healthy
+          readinessProbe:
+            httpGet:
+              port: 10902
+              path: /-/ready
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: kubemon-prometheus-data
+              mountPath: /data
+              subPath: ""
+      terminationGracePeriodSeconds: 300
+      volumes:
+        # The Prometheus ConfigMap is mounted into the Pods as a volume at `/etc/config`
+        - name: config-volume
+          configMap:
+            name: kubemon-prometheus-config
+        - name: kubemon-prometheus-data
+          emptyDir: {}

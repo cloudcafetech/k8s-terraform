@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: loki
+  name: loki
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: loki
+  serviceName: loki-headless
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      containers:
+      - args:
+        - -config.file=/etc/loki/loki.yaml
+        #image: docker.io/grafana/loki:2.0.0-amd64
+        image: docker.io/grafana/loki:2.8.0       
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: http-metrics
+            scheme: HTTP
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: loki
+        ports:
+        - containerPort: 3100
+          name: http-metrics
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: http-metrics
+            scheme: HTTP
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        securityContext:
+          procMount: Default
+          readOnlyRootFilesystem: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/loki
+          name: config
+        - mountPath: /etc/loki/rules
+          name: alert
+        - mountPath: /data
+          name: storage
+        - mountPath: /temp
+          name: temp
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      serviceAccount: loki
+      serviceAccountName: loki
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 420
+          name: loki-cm
+      - name: alert
+        configMap:
+          name: kubemon-loki-alert-config
+      - emptyDir: {}
+        name: storage
+      - emptyDir: {}
+        name: temp
+  updateStrategy:
+    type: RollingUpdate

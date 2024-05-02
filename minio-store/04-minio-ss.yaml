@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: minio-store
+  labels:
+    app: minio
+spec:
+  serviceName: minio
+  replicas: 2
+  #replicas: 3
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      #nodeSelector:
+        #region: master
+      containers:
+      - name: minio
+        image: minio/minio:latest
+        args:
+        - server   # who are our servers in cluster (below)
+        - http://minio-0.minio.minio-store.svc.cluster.local/data
+        - http://minio-1.minio.minio-store.svc.cluster.local/data
+        #- http://minio-2.minio.minio-store.svc.cluster.local/data        
+        - --console-address   # which port for console
+        - :9090
+        env:
+        - name: MINIO_PROMETHEUS_AUTH_TYPE
+          value: public
+        - name: MINIO_PROMETHEUS_URL
+          value: http://kubemon-prometheus.monitoring.svc.cluster.local:9090
+        - name: MINIO_PROMETHEUS_JOB_ID
+          value: minio-cluster
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrect
+              key: access_key
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrect
+              key: secret_key
+        ports:
+        - containerPort: 9000
+          hostPort: 9000
+        - containerPort: 9090
+          hostPort: 9090
+        volumeMounts:
+        - mountPath: /data
+          name: data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 5Gi

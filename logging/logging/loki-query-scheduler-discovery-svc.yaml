@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: loki
+    meta.helm.sh/release-namespace: logging
+  labels:
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/name: loki
+    prometheus.io/service-monitor: "false"
+  name: loki-query-scheduler-discovery
+  namespace: logging
+spec:
+  clusterIP: None
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+    - name: http-metrics
+      port: 3100
+      protocol: TCP
+      targetPort: http-metrics
+    - name: grpc
+      port: 9095
+      protocol: TCP
+      targetPort: grpc
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/name: loki
+  sessionAffinity: None
+  type: ClusterIP

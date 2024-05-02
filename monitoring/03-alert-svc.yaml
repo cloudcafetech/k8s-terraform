@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubemon-alertmanager-operated
+  labels:
+    app.kubernetes.io/name: kubemon
+    app.kubernetes.io/component: alertmanager
+spec:
+  type: "ClusterIP"
+  clusterIP: None
+  selector:
+    k8s-app: alertmanager
+  ports:
+    - name: mesh
+      # Exposes port 6783 at a cluster-internal IP address
+      port: 6783
+      protocol: TCP
+      # Routes requests to port 6783 of the Alertmanager StatefulSet Pods
+      targetPort: 6783
+    - name: http
+      port: 9093
+      protocol: TCP
+      targetPort: 9093
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubemon-alertmanager
+  labels:
+    k8s-app: alertmanager
+    app.kubernetes.io/name: kubemon
+    app.kubernetes.io/component: alertmanager
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      # Exposes port 9093 at a cluster-internal IP address
+      port: 9093
+      protocol: TCP
+      # Routes requests to port 9093 of the Alertmanager StatefulSet Pods
+      targetPort: 9093
+      nodePort: 30093
+  selector:
+    k8s-app: alertmanager

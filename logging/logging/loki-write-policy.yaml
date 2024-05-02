@@ -1,0 +1,19 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  annotations:
+    meta.helm.sh/release-name: loki
+    meta.helm.sh/release-namespace: logging
+  labels:
+    app.kubernetes.io/component: write
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/name: loki
+  name: loki-write
+  namespace: logging
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: write
+      app.kubernetes.io/instance: loki
+      app.kubernetes.io/name: loki

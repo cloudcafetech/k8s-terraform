@@ -1,0 +1,155 @@
+loki:
+  loki:
+    # Disable multi-tenant support
+    auth_enabled: false
+  
+    limits_config:
+      max_global_streams_per_user: 10000  # for error sending batch, Too Many Requests, Ingestion rate limit exceeded 
+      max_query_series: 10000
+      retention_period: 4d
+  
+    #schema config
+    schemaConfig:
+      configs:
+        - from: 2024-04-01
+          store: tsdb
+          object_store: s3
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+  
+    # S3 backend storage configuration
+    storage:
+      bucketNames:
+        chunks: lokik8sminio
+      type: s3
+      s3:
+        endpoint: http://minio-svc.minio-store.svc.cluster.local:9000
+        region: minio
+        secretAccessKey: ${MINIO_SECRET_ACCESS_KEY}
+        accessKeyId: ${MINIO_ACCESS_KEY_ID}
+        s3ForcePathStyle: true
+        insecure: false
+        http_config:
+          idle_conn_timeout: 90s
+          response_header_timeout: 0s
+          insecure_skip_verify: false
+  
+    # Ruler configuration
+    rulerConfig:
+      storage:
+        type: local
+        local:
+          directory: /var/loki/rules
+      ring:
+        kvstore:
+          store: inmemory
+      rule_path: /temp/loki/rules
+      alertmanager_url: http://kubemon-alertmanager.monitoring.svc.cluster.local:9093
+      enable_api: true
+      enable_alertmanager_v2: true
+
+  # Memcached Resource
+  memcached:
+    resources:
+      limits:
+        #memory: 9830Mi
+        memory: 1000Mi
+      requests:
+        cpu: 500m
+        #memory: 9830Mi
+        memory: 1000Mi
+  
+  # Configuration for write
+  write:
+    replicas: 2
+    persistence:
+      size: 2Gi
+      storageClass: local-path
+    extraArgs:
+      - '-config.expand-env=true'
+    extraEnv:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: loki-minio-secret
+            key: MINIO_ACCESS_KEY_ID
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: loki-minio-secret
+            key: MINIO_SECRET_ACCESS_KEY
+  
+  # Configuration for read
+  read:
+    replicas: 2
+    persistence:
+      size: 2Gi
+      storageClass: local-path
+    extraArgs:
+      - '-config.expand-env=true'
+    extraEnv:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: loki-minio-secret
+            key: MINIO_ACCESS_KEY_ID
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: loki-minio-secret
+            key: MINIO_SECRET_ACCESS_KEY
+    extraVolumes:
+    - name: rules
+      configMap:
+        name: loki-alert-rule-cm
+    extraVolumeMounts:
+    - name: rules
+      mountPath: /var/loki/rules
+  
+  # Configuration for backend
+  backend:
+    replicas: 2
+    persistence:
+      size: 2Gi
+      storageClass: local-path
+    extraArgs:
+      - '-config.expand-env=true'
+    extraEnv:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: loki-minio-secret
+            key: MINIO_ACCESS_KEY_ID
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: loki-minio-secret
+            key: MINIO_SECRET_ACCESS_KEY
+  
+  table_manager:
+    retention_deletes_enabled: true
+    retention_period: 4d
+  
+  # Configuration for the gateway
+  gateway:
+    enabled: true
+    replicas: 1
+  
+  # Disable mino installation
+  minio:
+    enabled: false
+  
+  # Disable self-monitoring
+  monitoring:
+    selfMonitoring:
+      enabled: false
+      grafanaAgent:
+        installOperator: false
+      lokiCanary:
+          enabled: false
+  
+  # Disable helm-test
+  test:
+    enabled: false
