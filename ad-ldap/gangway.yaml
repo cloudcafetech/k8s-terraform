@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gangway
+  namespace: auth-system
+data:
+  gangway.yaml: |
+    clusterName: "Kubernetes"
+    apiServerURL: "https://lb-ip-pri:6443"
+    authorizeURL: "https://auth.lb-ip-pub.nip.io/auth"  
+    tokenURL: "https://auth.lb-ip-pub.nip.io/token"
+    clientID: "oidc-auth-client"
+    clientSecret: "secret"
+    redirectURL: "https://kubectl.lb-ip-pub.nip.io/callback"
+    scopes: ["openid", "profile", "email", "offline_access"]
+    usernameClaim: "email"
+    emailClaim: "email"
+    # For insecure (selfsign), 509 certificate error  
+    trustedCAPath: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gangway
+  name: gangway
+  namespace: auth-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gangway
+  template:
+    metadata:
+      labels:
+        app: gangway
+    spec:
+      containers:
+      - command:
+        - gangway
+        - -config
+        - /gangway/gangway.yaml
+        env:
+        - name: GANGWAY_SESSION_SECURITY_KEY
+          valueFrom:
+            secretKeyRef:
+              key: sesssionkey
+              name: gangway-key
+        image: gcr.io/heptio-images/gangway:v3.2.0
+        imagePullPolicy: Always
+        name: gangway
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - mountPath: /etc/ssl/certs
+          name: certs
+        - mountPath: /gangway/
+          name: gangway
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: gangway
+        name: gangway
+      - name: certs
+        secret:
+          defaultMode: 420
+          secretName: dex
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gangway
+  name: gangway-svc
+  namespace: auth-system
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: gangway

@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+  name: argocd-cm
+data:
+  url: https://argo-console.lb-ip-pub.nip.io
+  dex.config: |
+    connectors:
+    - type: ldap
+      name: LDAP
+      id: ldap
+      config:
+        # Ldap server address
+        host: "ldap-ip-pri:389"
+        insecureNoSSL: true
+        insecureSkipVerify: true
+        startTLS: false
+        bindDN: cn=admin,dc=cloudcafe,dc=org
+        bindPW: 'StrongAdminPassw0rd'
+        usernamePrompt: Email Address
+        userSearch:
+          baseDN: ou=people,dc=cloudcafe,dc=org
+          emailAttr: mail
+          filter: (objectClass=person)
+          idAttr: DN
+          nameAttr: cn
+          username: mail
+        groupSearch:
+          baseDN: ou=groups,dc=cloudcafe,dc=org
+          filter: (objectClass=groupOfNames)
+          nameAttr: cn
+          userMatchers:
+          - groupAttr: member
+            userAttr: DN
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params-cm
+    app.kubernetes.io/part-of: argocd
+  name: argocd-cmd-params-cm
+  namespace: argocd
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+  name: argocd-rbac-cm
+  namespace: argocd
+data:
+  policy.csv: |
+    p, role:none, *, *, */*, deny
+    g, rxgroup, role:admin
+    g, adminchange, role:admin
+  policy.default: role:none
+  scopes: '[groups, cn]'  

@@ -1,0 +1,19 @@
+verbose_logging = false
+
+[[servers]]
+host = "ldap-ip-pri"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = true
+bind_dn = "cn=admin,dc=cloudcafe,dc=org"
+bind_password = 'StrongAdminPassw0rd'
+search_filter = "(mail=%s)"
+search_base_dns = ["ou=people,dc=cloudcafe,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "mail"

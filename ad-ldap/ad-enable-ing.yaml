@@ -1,0 +1,273 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dex
+  namespace: auth-system
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - secretName: dex
+    hosts:
+    - auth.lb-ip-pub.nip.io
+    - kubectl.lb-ip-pub.nip.io
+    - dashboard.lb-ip-pub.nip.io
+    - prom.lb-ip-pub.nip.io
+    - alert.lb-ip-pub.nip.io
+    - thanos-querier.lb-ip-pub.nip.io
+    - thanos-ruler.lb-ip-pub.nip.io
+  rules:
+  - host: auth.lb-ip-pub.nip.io
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: dex
+              port:
+                number: 5556
+  - host: kubectl.lb-ip-pub.nip.io
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: gangway-svc
+              port:
+                number: 80
+  - host: dashboard.lb-ip-pub.nip.io
+    http:
+      paths:
+        - path: /oauth2
+          pathType: Prefix
+          backend:
+            service:
+              name: oauth2-proxy
+              port:
+                number: 4180
+  - host: prom.lb-ip-pub.nip.io
+    http:
+      paths:
+        - path: /oauth2
+          pathType: Prefix
+          backend:
+            service:
+              name: oauth2-proxy
+              port:
+                number: 4180  
+  - host: alert.lb-ip-pub.nip.io
+    http:
+      paths:
+        - path: /oauth2
+          pathType: Prefix
+          backend:
+            service:
+              name: oauth2-proxy
+              port:
+                number: 4180
+  - host: thanos-ruler.lb-ip-pub.nip.io
+    http:
+      paths:
+        - path: /oauth2
+          pathType: Prefix
+          backend:
+            service:
+              name: oauth2-proxy
+              port:
+                number: 4180
+  - host: thanos-querier.lb-ip-pub.nip.io
+    http:
+      paths:
+        - path: /oauth2
+          pathType: Prefix
+          backend:
+            service:
+              name: oauth2-proxy
+              port:
+                number: 4180
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/auth-response-headers: "authorization"
+  name: k8s-dashboard-external-auth2
+  namespace: auth-system
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: dashboard.lb-ip-pub.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kubernetes-dashboard
+            port:
+              number: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+  name: monitoring-external-auth2
+  namespace: monitoring
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: prom.lb-ip-pub.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kubemon-prometheus
+            port:
+              number: 9090
+  - host: alert.lb-ip-pub.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kubemon-alertmanager
+            port:
+              number: 9093
+  - host: thanos-querier.lb-ip-pub.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thanos-querier
+            port:
+              number: 9090
+  - host: thanos-ruler.lb-ip-pub.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thanos-ruler
+            port:
+              number: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  namespace: monitoring
+spec:
+  ingressClassName: nginx
+  tls:
+  - secretName: grafana-tls
+    hosts:
+    - grafana.lb-ip-pub.nip.io
+  rules:
+    - host: grafana.lb-ip-pub.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+  name: argo-console
+  namespace: argocd
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - argo-console.lb-ip-pub.nip.io
+    secretName: argocd-tls
+  rules:
+  - host: argo-console.lb-ip-pub.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: argocd-server
+            port:
+              name: https
+        path: /
+        pathType: Prefix
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  namespace: minio-store
+  labels:
+    app: minio
+spec:
+  ingressClassName: nginx  
+  tls:
+  - secretName: minio-tls
+    hosts:
+    - minio-console.lb-ip-pub.nip.io
+  rules:
+  - host: minio-console.lb-ip-pub.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: minio-svc
+            port:
+              number: 9090
+        path: /
+        pathType: Prefix
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-api
+  namespace: minio-store
+  labels:
+    app: minio
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: minio-api.lb-ip-pri.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: minio-svc
+            port:
+              number: 9000
+        path: /
+        pathType: Prefix

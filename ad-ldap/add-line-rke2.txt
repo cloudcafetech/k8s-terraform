@@ -1,0 +1,6 @@
+kube-apiserver-arg:
+  - --oidc-issuer-url=https://auth.lb-ip-pub.nip.io/
+  - --oidc-client-id=oidc-auth-client
+  - --oidc-ca-file=/var/lib/rancher/rke2/server/tls/dex-ca.crt
+  - --oidc-username-claim=email
+  - --oidc-groups-claim=groups

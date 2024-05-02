@@ -1,0 +1,5 @@
+    - --oidc-issuer-url=https://auth.lb-ip-pub.nip.io/
+    - --oidc-client-id=oidc-auth-client
+    - --oidc-ca-file=/etc/kubernetes/pki/dex-ca.crt
+    - --oidc-username-claim=email
+    - --oidc-groups-claim=groups
