@@ -1,0 +1,20 @@
+apiVersion: velero.io/v1
+kind: Backup
+metadata:
+  labels:
+    velero.io/storage-location: default
+  name: k8s-cluster-backup
+  namespace: velero
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  defaultVolumesToFsBackup: true
+  hooks: {}
+  includedNamespaces:
+  - '*'
+  metadata: {}
+  snapshotMoveData: false
+  storageLocation: default
+  ttl: 720h0m0s
+  volumeSnapshotLocations:
+  - aws

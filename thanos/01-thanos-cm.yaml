@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thanos-ruler-rules
+data:
+  alert_down_services.rules.yaml: |
+    groups:
+    - name: metamonitoring
+      rules:
+      - alert: PrometheusReplicaDown
+        annotations:
+          message: Prometheus replica in cluster {{$labels.cluster}} has disappeared from Prometheus target discovery.
+        expr: |
+          sum(up{cluster="prometheus-ha", instance=~".*:9090", job="kubernetes-service-endpoints"}) by (job,cluster) < 3
+        for: 15s
+        labels:
+          severity: critical

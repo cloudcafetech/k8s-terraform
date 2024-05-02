@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: velero-minio-secret
+  namespace: velero
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+type: Opaque
+data:
+  # By default, admin is set to `admin2675`
+  cloud: ICBbZGVmYXVsdF0KICBhd3NfYWNjZXNzX2tleV9pZD1hZG1pbgogIGF3c19zZWNyZXRfYWNjZXNzX2tleT1hZG1pbjI2NzUK

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: rancher-subchart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+- name: rancher
+  version: 2.7.3
+  repository: https://releases.rancher.com/server-charts/stable

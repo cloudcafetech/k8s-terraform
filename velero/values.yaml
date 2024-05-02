@@ -1,0 +1,60 @@
+velero:
+
+  resources:
+    requests:
+      cpu: 300m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
+  initContainers:
+    - name: velero-plugin-for-aws
+      image: velero/velero-plugin-for-aws:v1.9.2
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - mountPath: /target
+          name: plugins
+          
+  configuration:
+    defaultVolumesToFsBackup: true
+    backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: velero
+      accessMode: ReadWrite
+      default: true
+      config:
+        region: minio
+        s3ForcePathStyle: true
+        s3Url: http://minio-svc.minio-store.svc:9000
+        insecureSkipTLSVerify: true        
+        #publicUrl: http://minio-svc.minio-store.svc.cluster.local:9000
+    volumeSnapshotLocation:
+    - name: aws
+      provider: aws
+      config:
+        region: minio
+        s3ForcePathStyle: true
+        s3Url: http://minio-svc.minio-store.svc:9000        
+        insecureSkipTLSVerify: true   
+        
+  credentials:
+    useSecret: true
+    existingSecret: velero-minio-secret
+    secretContents:
+    # Create secret using below content (kubectl create secret generic -n velero velero-minio-secret --from-file==cloud=<file-name>)
+      #cloud: |
+        #[default]
+        #aws_access_key_id = admin
+        #aws_secret_access_key = admin2675
+
+  deployNodeAgent: true
+  nodeAgent:
+    resources:
+      requests:
+        cpu: 300m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 512Mi

@@ -1,0 +1,27 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: k8s-daily
+  namespace: velero
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"  
+spec:
+  schedule: '*/5 * * * *'
+  template:
+    csiSnapshotTimeout: 10m
+    includedNamespaces:
+    - '*'
+    excludedNamespaces:
+    #- some-namespace
+    includedResources:
+    - '*'
+    excludedResources:
+    #- storageclasses.storage.k8s.io
+    includeClusterResources: true
+    snapshotMoveData: false
+    storageLocation: default
+    volumeSnapshotLocations:
+      - aws
+    ttl: 720h0m0s
+    defaultVolumesToFsBackup: true
+  #useOwnerReferencesInBackup: false

@@ -1,4 +1,4 @@
-# Kubernetes on Google Cloud using Kubeadm and Terraform
+# Kubernetes on Google Cloud using RKE2 and Terraform
 
 ## Installing tools
 
@@ -35,10 +35,10 @@ tar -xf google-cloud-cli-470.0.0-linux-x86_64.tar.gz
 ### Download repo, edit provider.tf and modify ```credentials``` part
 ```
 git clone https://github.com/cloudcafetech/k8s-terraform
-cd k8s-terraform/kubeadm
+cd k8s-terraform/rke2
 ```
 
-### Start Kubeadm K8s Setup using Terraform
+### Start K8s Setup using RKE2
 ```
 ssh-keygen -t rsa -N '' -f ./gcpkey -C k8sgcp -b 2048
 terraform init
@@ -48,3 +48,6 @@ terraform apply -auto-approve
 
 ### Destroy Setup 
 ```terraform destroy -auto-approve```
+
+### Known issue
+Loki loogging loki-gateway Nginx startup (crashloopback) failed due to DNS service in RKE2 as its uses coredns. As a temporary fix create a kube-dns SVC in kube-system namespace or modify helm value as mention in [Ref](https://github.com/grafana/loki/issues/7287#issuecomment-1282339134)

@@ -1,0 +1,167 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-store-gateway
+  labels:
+    app: thanos-store-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-store-gateway
+  serviceName: thanos-store-gateway
+  template:
+    metadata:
+      labels:
+        app: thanos-store-gateway
+        thanos-store-api: "true"
+    spec:
+      containers:
+        - name: thanos
+          image: quay.io/thanos/thanos:v0.31.0
+          args:
+          - "store"
+          - "--log.level=debug"
+          - "--data-dir=/data"
+          - "--index-cache-size=500MB"
+          - "--chunk-pool-size=500MB"
+          - "--objstore.config={'type': 'S3', 'config': {'endpoint': 'minio-svc.minio-store.svc.cluster.local:9000', 'bucket': 'promk8sminio', 'insecure': true}}"
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrect
+                  key: access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                 name: minio-secrect
+                 key: secret_key
+          ports:
+          - name: http
+            containerPort: 10902
+          - name: grpc
+            containerPort: 10901
+          livenessProbe:
+            httpGet:
+              port: 10902
+              path: /-/healthy
+          readinessProbe:
+            httpGet:
+              port: 10902
+              path: /-/ready
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-querier
+  labels:
+    app: thanos-querier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-querier
+  template:
+    metadata:
+      labels:
+        app: thanos-querier
+    spec:
+      containers:
+      - name: thanos
+        image: quay.io/thanos/thanos:v0.31.0
+        args:
+        - query
+        - --log.level=debug
+        - --query.replica-label=replica
+        - --store=dnssrv+thanos-store-gateway:10901
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        livenessProbe:
+          httpGet:
+            port: http
+            path: /-/healthy
+        readinessProbe:
+          httpGet:
+            port: http
+            path: /-/ready
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: thanos-ruler
+  name: thanos-ruler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-ruler
+  serviceName: thanos-ruler
+  template:
+    metadata:
+      labels:
+        app: thanos-ruler
+        thanos-store-api: "true"
+    spec:
+      containers:
+        - name: thanos
+          image: quay.io/thanos/thanos:v0.31.0
+          args:
+            - rule
+            - --log.level=debug
+            - --data-dir=/data
+            - --eval-interval=15s
+            - --rule-file=/etc/thanos-ruler/*.rules.yaml
+            - --alertmanagers.url=http://kubemon-alertmanager.monitoring.svc.cluster.local:9093
+            - --query=thanos-querier:9090
+            - --label=ruler_cluster="prometheus-ha"
+            - --label=replica="$(POD_NAME)"
+            - "--objstore.config={'type': 'S3', 'config': {'endpoint': 'minio-svc.minio-store.svc.cluster.local:9000', 'bucket': 'promk8sminio', 'insecure': true}}"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrect
+                  key: access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                 name: minio-secrect
+                 key: secret_key
+          ports:
+            - name: http
+              containerPort: 10902
+            - name: grpc
+              containerPort: 10901
+          livenessProbe:
+            httpGet:
+              port: http
+              path: /-/healthy
+          readinessProbe:
+            httpGet:
+              port: http
+              path: /-/ready
+          volumeMounts:
+            - mountPath: /etc/thanos-ruler
+              name: config
+      volumes:
+        - configMap:
+            name: thanos-ruler-rules
+          name: config
