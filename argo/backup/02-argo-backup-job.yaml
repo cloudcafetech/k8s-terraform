@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: argocd-backup
+  namespace: argo-backup
+spec:
+  #schedule: "0 0 * * *"
+  schedule: "*/10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: sa-argocd-backup
+          containers:
+          - image: quay.io/argoproj/argocd:v2.6.9
+            imagePullPolicy: Always
+            name: backup
+            env:
+            - name: MINIO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrect
+                  key: admin-user
+            - name: MINIO_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrect
+                  key: admin-password
+            - name: MINIO_REGION
+              value: "minio"
+            command: ["sh", "-c", "apt-get update && apt-get install awscli -y && aws configure set aws_access_key_id $MINIO_USER && aws configure set aws_secret_access_key $MINIO_PASS && aws configure set region $MINIO_REGION && aws configure set default.s3.signature_version s3v4 && argocd admin export -n argocd > backup-$(date +%Y-%m-%d_%H)_pod-$HOSTNAME.yml && aws --endpoint-url http://minio-svc.minio-store.svc.cluster.local:9000 s3 cp backup-$(date +%Y-%m-%d_%H)_pod-$HOSTNAME.yml s3://argo-backup/backup-$(date +%Y-%m-%d_%H)_pod-$HOSTNAME.yml"]
+            securityContext:
+              runAsUser: 0
+          restartPolicy: Never

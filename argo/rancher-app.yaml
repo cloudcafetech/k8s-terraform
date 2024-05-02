@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rancher
+  namespace: argocd
+spec:
+  destination:
+    namespace: cattle-system
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: rancher
+    repoURL: 'https://github.com/cloudcafetech/k8s-terraform'
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

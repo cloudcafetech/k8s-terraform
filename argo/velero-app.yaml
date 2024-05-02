@@ -1,0 +1,24 @@
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: velero
+  sources:
+    - repoURL: https://github.com/cloudcafetech/k8s-terraform
+      path: velero/manifest
+      targetRevision: HEAD
+    - repoURL: https://github.com/cloudcafetech/k8s-terraform
+      path: velero
+      targetRevision: HEAD

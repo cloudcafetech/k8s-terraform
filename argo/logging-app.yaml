@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: logging
+  namespace: argocd
+spec:
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+  sources:
+    - repoURL: https://github.com/cloudcafetech/k8s-terraform
+      path: logging/logging
+      targetRevision: HEAD    
+      #path: logging/manifest
+    #- repoURL: https://github.com/cloudcafetech/k8s-terraform
+      #path: logging
+      #targetRevision: HEAD
