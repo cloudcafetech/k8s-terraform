@@ -16,9 +16,9 @@ spec:
     namespace: logging
   sources:
     - repoURL: https://github.com/cloudcafetech/k8s-terraform
-      path: logging/logging
+      #path: logging/logging
       targetRevision: HEAD    
-      #path: logging/manifest
-    #- repoURL: https://github.com/cloudcafetech/k8s-terraform
-      #path: logging
-      #targetRevision: HEAD
+      path: logging/manifest
+    - repoURL: https://github.com/cloudcafetech/k8s-terraform
+      path: logging
+      targetRevision: HEAD
