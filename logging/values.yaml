@@ -60,6 +60,11 @@ loki:
         cpu: 500m
         #memory: 9830Mi
         memory: 1000Mi
+
+  # Amount of memory allocated to chunks-cache for object storage (in MB).
+  chunksCache:
+    #allocatedMemory: 8192
+    allocatedMemory: 1024
   
   # Configuration for write
   write:
