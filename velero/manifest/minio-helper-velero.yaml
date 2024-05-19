@@ -172,22 +172,22 @@ spec:
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:
-              name: minio-provisioner
+              name: minio-provisioner-velero
               key: access_key
         - name: MINIO_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: minio-provisioner
+              name: minio-provisioner-velero
               key: secret_key
         - name: MINIO_GLOBAL_USER
           valueFrom:
             secretKeyRef:
-              name: minio-provisioner
+              name: minio-provisioner-velero
               key: common_user
         - name: MINIO_GLOBAL_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: minio-provisioner
+              name: minio-provisioner-velero
               key: common_pass
         image: docker.io/bitnami/minio:2024.5.1-debian-12-r0
         imagePullPolicy: IfNotPresent
