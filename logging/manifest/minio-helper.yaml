@@ -3,6 +3,8 @@ kind: ServiceAccount
 metadata:
   name: minio-provisioner-lokik8sminio
   namespace: logging
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"  
   labels:
     app.kubernetes.io/instance: minio-configurator
     app.kubernetes.io/name: minio-configurator
@@ -29,7 +31,7 @@ metadata:
   name: minio-provisioner-lokik8sminio
   namespace: logging
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "-2"
     meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
@@ -80,7 +82,7 @@ metadata:
   annotations:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "1"
     meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
