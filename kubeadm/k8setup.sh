@@ -251,10 +251,10 @@ kubectl create -f all-ing.yaml
 sleep 10
 minioing=`kubectl get ing -n minio-store | grep minio-api | awk '{ print $3}'`
 mc config host add k8sminio http://$minioing admin admin2675 --insecure
-mc mb k8sminio/lokik8sminio --insecure
-mc mb k8sminio/promk8sminio --insecure
-mc mb k8sminio/velero --insecure
-mc mb k8sminio/argo-backup --insecure
+# mc mb k8sminio/lokik8sminio --insecure
+# mc mb k8sminio/promk8sminio --insecure
+# mc mb k8sminio/velero --insecure
+# mc mb k8sminio/argo-backup --insecure
 
 echo - Setup Monitoring
 curl -#OL https://github.com/cloudcafetech/kubesetup/raw/master/monitoring/dashboard/pod-monitoring.json
