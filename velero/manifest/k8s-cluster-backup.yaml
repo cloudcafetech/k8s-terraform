@@ -6,7 +6,7 @@ metadata:
   name: k8s-cluster-backup
   namespace: velero
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "8"
 spec:
   defaultVolumesToFsBackup: true
   hooks: {}
