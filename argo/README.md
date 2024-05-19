@@ -52,6 +52,10 @@ kubectl create -f thanos-app.yaml -n argocd
 
 ```kubectl get apps -n argocd```
 
+## Argocd apps DELETE [Ref (https://github.com/argoproj/argo-cd/issues/12493#issuecomment-1433310845)]
+
+```kubectl patch apps/velero -n argocd --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]'```
+
 ## Velero CLI
 
 ```
