@@ -4,7 +4,7 @@ metadata:
   name: k8s-daily
   namespace: velero
   annotations:
-    argocd.argoproj.io/sync-wave: "3"  
+    argocd.argoproj.io/sync-wave: "5"  
 spec:
   schedule: '*/10 * * * *'
   template:
