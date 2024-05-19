@@ -1,0 +1,262 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio-provisioner-velero
+  namespace: velero
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"  
+  labels:
+    app.kubernetes.io/instance: minio-configurator
+    app.kubernetes.io/name: minio-configurator
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-provisioner-velero
+  namespace: velero
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+type: Opaque
+data:
+  # By default user admin and password admin2675
+  access_key: YWRtaW4=
+  secret_key: "YWRtaW4yNjc1"
+  # By default user global and password global2675
+  common_user: Z2xvYmFs
+  common_pass: "Z2xvYmFsMjY3NQ=="
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-provisioner-velero
+  namespace: velero
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+    meta.helm.sh/release-name: minio-configurator
+  labels:
+    app.kubernetes.io/instance: minio-configurator
+    app.kubernetes.io/name: minio-configurator
+data:
+  bucket-rules.json: |
+    {
+      "Rules": [
+        {
+          "ID": "TestPrefix7dRetention",
+          "Status": "Enabled",
+          "Expiration": {
+            "Days": 7
+          }
+          ,
+          "NoncurrentVersionExpiration": {
+            "NoncurrentDays": 3
+          }
+          ,
+          "Filter": {
+            "Prefix": "test-prefix"
+          }
+        }
+      ]
+    }
+  bucket-policy.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": ["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],
+          "Resource": ["arn:aws:s3:::velero"]
+        },
+        {
+          "Effect": "Allow",
+          "Action": ["s3:AbortMultipartUpload","s3:DeleteObject","s3:GetObject","s3:ListMultipartUploadParts","s3:PutObject"],
+          "Resource": ["arn:aws:s3:::velero/*"]
+        }
+      ]
+    }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-provisioner
+  namespace: velero
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "1"
+    meta.helm.sh/release-name: minio-configurator
+  labels:
+    app.kubernetes.io/instance: minio-configurator
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio-configurator
+spec:
+  # Automatic Cleanup for Finished Jobs
+  # ref: https://kubernetes.io/docs/concepts/workloads/controllers/ttlafterfinished/
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -c
+        - |-
+          set -e;
+          echo "Start Minio provisioning";
+          function attachPolicy() {
+            local tmp=$(mc admin $1 info provisioning $2 | sed -n -e 's/^Policy.*: \(.*\)$/\1/p');
+            IFS=',' read -r -a CURRENT_POLICIES <<< "$tmp";
+            if [[ ! "${CURRENT_POLICIES[*]}" =~ "$3" ]]; then
+              mc admin policy attach provisioning $3 --$1=$2;
+            fi;
+          };
+          function detachDanglingPolicies() {
+            local tmp=$(mc admin $1 info provisioning $2 | sed -n -e 's/^Policy.*: \(.*\)$/\1/p');
+            IFS=',' read -r -a CURRENT_POLICIES <<< "$tmp";
+            IFS=',' read -r -a DESIRED_POLICIES <<< "$3";
+            for current in "${CURRENT_POLICIES[@]}"; do
+              if [[ ! "${DESIRED_POLICIES[*]}" =~ "${current}" ]]; then
+                mc admin policy detach provisioning $current --$1=$2;
+              fi;
+            done;
+          }
+          function addUsersFromFile() {
+            local username=$(grep -oP '^username=\K.+' $1);
+            local password=$(grep -oP '^password=\K.+' $1);
+            local disabled=$(grep -oP '^disabled=\K.+' $1);
+            local policies_list=$(grep -oP '^policies=\K.+' $1);
+            local set_policies=$(grep -oP '^setPolicies=\K.+' $1);
+
+            mc admin user add provisioning "${username}" "${password}";
+
+            IFS=',' read -r -a POLICIES <<< "${policies_list}";
+            for policy in "${POLICIES[@]}"; do
+              attachPolicy user "${username}" "${policy}";
+            done;
+            if [ "${set_policies}" == "true" ]; then
+              detachDanglingPolicies user "${username}" "${policies_list}";
+            fi;
+
+            local user_status="enable";
+            if [[ "${disabled}" != "" && "${disabled,,}" == "true" ]]; then
+              user_status="disable";
+            fi;
+
+            mc admin user "${user_status}" provisioning "${username}";
+          }; mc alias set provisioning $MINIO_SCHEME://$MINIO_HOST:$MINIO_PORT $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
+          mc admin config set provisioning region name=minio; mc admin policy create provisioning velero-bucket-policy /etc/ilm/bucket-policy.json;
+          mc admin user add provisioning $MINIO_GLOBAL_USER $MINIO_GLOBAL_PASSWORD;
+          attachPolicy user $MINIO_GLOBAL_USER readwrite;
+          attachPolicy user $MINIO_GLOBAL_USER consoleAdmin;
+          attachPolicy user $MINIO_GLOBAL_USER diagnostics;
+          mc admin user enable provisioning $MINIO_GLOBAL_USER;
+          mc mb provisioning/velero --ignore-existing --region=minio --with-lock;
+          mc ilm import provisioning/velero < /etc/ilm/bucket-rules.json;
+          mc quota set provisioning/velero --size $MINIO_QUOTA;
+          mc tag set provisioning/velero "name=velero";
+          mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/velero;
+          echo "End Minio provisioning";
+        env:
+        - name: MINIO_QUOTA
+          value: "10GiB"
+        - name: MINIO_RETENTION
+          value: "5d"
+        - name: MC_INSECURE
+          value: "true"
+        - name: MINIO_SCHEME
+          value: http
+        - name: MINIO_HOST
+          value: "minio-svc.minio-store.svc.cluster.local"
+        - name: MINIO_PORT
+          value: "9000"
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-provisioner
+              key: access_key
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-provisioner
+              key: secret_key
+        - name: MINIO_GLOBAL_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-provisioner
+              key: common_user
+        - name: MINIO_GLOBAL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-provisioner
+              key: common_pass
+        image: docker.io/bitnami/minio:2024.5.1-debian-12-r0
+        imagePullPolicy: IfNotPresent
+        name: minio
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /.mc
+          name: empty-dir
+          subPath: app-mc-dir
+        - mountPath: /opt/bitnami/minio/tmp
+          name: empty-dir
+          subPath: app-tmp-dir
+        - mountPath: /tmp
+          name: empty-dir
+          subPath: tmp-dir
+        - mountPath: /etc/ilm
+          name: minio-provisioning
+        - mountPath: /opt/bitnami/minio/secrets/
+          name: minio-credentials
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+        - /bin/bash
+        - -c
+        - |-
+          set -e;
+          echo "Waiting for Minio";
+          wait-for-port \
+            --host=$MINIO_HOST \
+            --state=inuse \
+            --timeout=120 \
+            $MINIO_PORT;
+          echo "Minio is available";
+        image: docker.io/bitnami/minio:2024.5.1-debian-12-r0
+        imagePullPolicy: IfNotPresent
+        name: wait-for-available-minio
+        env:
+        - name: MINIO_HOST
+          value: "minio-svc.minio-store.svc.cluster.local"
+        - name: MINIO_PORT
+          value: "9000"
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      restartPolicy: OnFailure
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: minio-provisioner-velero
+      serviceAccountName: minio-provisioner-velero
+      terminationGracePeriodSeconds: 0
+      tolerations:
+      - effect: NoSchedule
+        key: infra
+        operator: Equal
+        value: reserved
+      - effect: NoExecute
+        key: infra
+        operator: Equal
+        value: reserved
+      volumes:
+      - emptyDir: {}
+        name: empty-dir
+      - configMap:
+          defaultMode: 420
+          name: minio-provisioner-velero
+        name: minio-provisioning
+      - name: minio-credentials
+        secret:
+          defaultMode: 420
+          secretName: minio-provisioner-velero
