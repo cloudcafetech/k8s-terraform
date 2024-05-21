@@ -148,6 +148,7 @@ spec:
           mc admin user enable provisioning $MINIO_GLOBAL_USER;
           mc mb provisioning/velero --ignore-existing --region=minio --with-lock;
           mc ilm import provisioning/velero < /etc/ilm/bucket-rules.json;
+          mc version suspend provisioning/velero;          
           mc quota set provisioning/velero --size $MINIO_QUOTA;
           mc tag set provisioning/velero "name=velero";
           #mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/velero;
