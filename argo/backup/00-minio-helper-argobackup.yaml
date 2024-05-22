@@ -143,11 +143,13 @@ spec:
           attachPolicy user $MINIO_GLOBAL_USER consoleAdmin;
           attachPolicy user $MINIO_GLOBAL_USER diagnostics;
           mc admin user enable provisioning $MINIO_GLOBAL_USER;
-          mc mb provisioning/argo-backup --ignore-existing --region=minio --with-lock;
+          #mc mb provisioning/argo-backup --ignore-existing --region=minio --with-lock;
+          mc mb provisioning/argo-backup --ignore-existing --region=minio;          
           mc ilm import provisioning/argo-backup < /etc/ilm/bucket-rules.json;
+          mc version suspend provisioning/argo-backup;                
           mc quota set provisioning/argo-backup --size $MINIO_QUOTA;
           mc tag set provisioning/argo-backup "name=argo-backup";
-          mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/argo-backup;
+          #mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/argo-backup;
           echo "End Minio provisioning";
         env:
         - name: MINIO_QUOTA
