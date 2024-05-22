@@ -4,6 +4,8 @@ metadata:
   name: minio-provisioner-argo-backup
   namespace: argo-backup
   annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  
     argocd.argoproj.io/sync-wave: "-2"  
   labels:
     app.kubernetes.io/instance: minio-configurator
