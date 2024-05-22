@@ -32,7 +32,6 @@ metadata:
   namespace: velero
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
-    meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
     app.kubernetes.io/name: minio-configurator
@@ -41,7 +40,7 @@ data:
     {
       "Rules": [
         {
-          "ID": "logging-retention",
+          "ID": "bucket-retention",
           "Status": "Enabled",
           "Expiration": {
             "Days": 7
@@ -82,7 +81,6 @@ metadata:
     meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: minio-configurator
 spec:
   # Automatic Cleanup for Finished Jobs
