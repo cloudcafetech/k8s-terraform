@@ -32,7 +32,6 @@ metadata:
   namespace: argo-backup
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
-    meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
     app.kubernetes.io/name: minio-configurator
@@ -41,7 +40,7 @@ data:
     {
       "Rules": [
         {
-          "ID": "TestPrefix7dRetention",
+          "ID": "bucket-retention",
           "Status": "Enabled",
           "Expiration": {
             "Days": 7
@@ -49,10 +48,6 @@ data:
           ,
           "NoncurrentVersionExpiration": {
             "NoncurrentDays": 3
-          }
-          ,
-          "Filter": {
-            "Prefix": "test-prefix"
           }
         }
       ]
@@ -83,10 +78,8 @@ metadata:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
     argocd.argoproj.io/sync-wave: "1"
-    meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: minio-configurator
 spec:
   # Automatic Cleanup for Finished Jobs
