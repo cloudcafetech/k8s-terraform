@@ -146,7 +146,8 @@ spec:
           attachPolicy user $MINIO_GLOBAL_USER consoleAdmin;
           attachPolicy user $MINIO_GLOBAL_USER diagnostics;
           mc admin user enable provisioning $MINIO_GLOBAL_USER;
-          mc mb provisioning/velero --ignore-existing --region=minio --with-lock;
+          #mc mb provisioning/velero --ignore-existing --region=minio --with-lock;
+          mc mb provisioning/velero --ignore-existing --region=minio;          
           mc ilm import provisioning/velero < /etc/ilm/bucket-rules.json;
           mc version suspend provisioning/velero;          
           mc quota set provisioning/velero --size $MINIO_QUOTA;
