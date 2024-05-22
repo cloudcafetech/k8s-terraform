@@ -32,7 +32,6 @@ metadata:
   namespace: logging
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
-    meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
     app.kubernetes.io/name: minio-configurator
@@ -41,7 +40,7 @@ data:
     {
       "Rules": [
         {
-          "ID": "TestPrefix7dRetention",
+          "ID": "bucket-retention",
           "Status": "Enabled",
           "Expiration": {
             "Days": 7
@@ -49,10 +48,6 @@ data:
           ,
           "NoncurrentVersionExpiration": {
             "NoncurrentDays": 3
-          }
-          ,
-          "Filter": {
-            "Prefix": "test-prefix"
           }
         }
       ]
@@ -83,10 +78,8 @@ metadata:
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
     argocd.argoproj.io/sync-wave: "1"
-    meta.helm.sh/release-name: minio-configurator
   labels:
     app.kubernetes.io/instance: minio-configurator
-    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: minio-configurator
 spec:
   # Automatic Cleanup for Finished Jobs
@@ -150,11 +143,13 @@ spec:
           attachPolicy user $MINIO_GLOBAL_USER consoleAdmin;
           attachPolicy user $MINIO_GLOBAL_USER diagnostics;
           mc admin user enable provisioning $MINIO_GLOBAL_USER;
-          mc mb provisioning/lokik8sminio --ignore-existing --region=minio --with-lock;
+          #mc mb provisioning/lokik8sminio --ignore-existing --region=minio --with-lock;
+          mc mb provisioning/lokik8sminio --ignore-existing --region=minio;          
           mc ilm import provisioning/lokik8sminio < /etc/ilm/bucket-rules.json;
+          mc version suspend provisioning/lokik8sminio;          
           mc quota set provisioning/lokik8sminio --size $MINIO_QUOTA;
           mc tag set provisioning/lokik8sminio "name=logging";
-          mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/lokik8sminio;
+          #mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/lokik8sminio;
           echo "End Minio provisioning";
         env:
         - name: MINIO_QUOTA
