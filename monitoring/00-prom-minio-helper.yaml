@@ -4,6 +4,8 @@ metadata:
   name: minio-provisioner-promk8sminio
   namespace: monitoring
   annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  
     argocd.argoproj.io/sync-wave: "-2"  
   labels:
     app.kubernetes.io/instance: minio-configurator
@@ -15,6 +17,8 @@ metadata:
   name: minio-provisioner-promk8sminio
   namespace: monitoring
   annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  
     argocd.argoproj.io/sync-wave: "-2"
 type: Opaque
 data:
@@ -31,6 +35,8 @@ metadata:
   name: minio-provisioner-promk8sminio
   namespace: monitoring
   annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  
     argocd.argoproj.io/sync-wave: "-2"
     meta.helm.sh/release-name: minio-configurator
   labels:
@@ -41,7 +47,7 @@ data:
     {
       "Rules": [
         {
-          "ID": "TestPrefix7dRetention",
+          "ID": "bucket-retention",
           "Status": "Enabled",
           "Expiration": {
             "Days": 7
@@ -49,10 +55,6 @@ data:
           ,
           "NoncurrentVersionExpiration": {
             "NoncurrentDays": 3
-          }
-          ,
-          "Filter": {
-            "Prefix": "test-prefix"
           }
         }
       ]
@@ -150,11 +152,13 @@ spec:
           attachPolicy user $MINIO_GLOBAL_USER consoleAdmin;
           attachPolicy user $MINIO_GLOBAL_USER diagnostics;
           mc admin user enable provisioning $MINIO_GLOBAL_USER;
-          mc mb provisioning/promk8sminio --ignore-existing --region=minio --with-lock;
+          mc mb provisioning/promk8sminio --ignore-existing --region=minio;          
+          #mc mb provisioning/promk8sminio --ignore-existing --region=minio --with-lock;
           mc ilm import provisioning/promk8sminio < /etc/ilm/bucket-rules.json;
+          mc version suspend provisioning/promk8sminio;               
           mc quota set provisioning/promk8sminio --size $MINIO_QUOTA;
           mc tag set provisioning/promk8sminio "name=monitoring";
-          mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/promk8sminio;
+          #mc retention set --default GOVERNANCE $MINIO_RETENTION provisioning/promk8sminio;
           echo "End Minio provisioning";
         env:
         - name: MINIO_QUOTA
