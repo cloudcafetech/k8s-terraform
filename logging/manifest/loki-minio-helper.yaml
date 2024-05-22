@@ -4,6 +4,8 @@ metadata:
   name: minio-provisioner-lokik8sminio
   namespace: logging
   annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  
     argocd.argoproj.io/sync-wave: "-2"  
   labels:
     app.kubernetes.io/instance: minio-configurator
@@ -15,6 +17,8 @@ metadata:
   name: minio-provisioner-lokik8sminio
   namespace: logging
   annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  
     argocd.argoproj.io/sync-wave: "-2"
 type: Opaque
 data:
@@ -31,6 +35,8 @@ metadata:
   name: minio-provisioner-lokik8sminio
   namespace: logging
   annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  
     argocd.argoproj.io/sync-wave: "-2"
   labels:
     app.kubernetes.io/instance: minio-configurator
