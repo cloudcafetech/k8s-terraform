@@ -1,5 +1,3 @@
-<img src="logo/trident.png" alt="NetApp Trident" width="100" height="100">
-
 [![Support](https://img.shields.io/badge/support-official-0067C5.svg)](http://mysupport.netapp.com/info/web/ECMLP2619434.html)
 [![Chat](https://img.shields.io/badge/chat-slack-4C9689.svg)](http://netapp.io/slack/)
 [![GitHub last commit](https://img.shields.io/github/last-commit/netapp/trident.svg)](https://github.com/NetApp/trident/commits)
@@ -23,3 +21,53 @@ Detailed documentation for Trident can be found [here](https://docs.netapp.com/u
 Take a look at the [Astra documentation](https://docs.netapp.com/us-en/astra/) to get started today.
 
 See [NetApp's Support site](https://mysupport.netapp.com/site/info/version-support) for details on Trident's support policy under the [Trident's Release and Support Lifecycle](https://mysupport.netapp.com/site/info/trident-support) tab.
+
+### Deploy trident using ArgoCD from trident (v24.02.0)
+
+```
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trident
+  namespace: argocd
+spec:
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: trident
+  source:
+    path: helm/trident-operator
+    repoURL: 'https://github.com/NetApp/trident'
+    targetRevision: v24.02.0
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+```
+
+### Deploy trident using ArgoCD from this repo (v24.02.0)
+
+```
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trident
+  namespace: argocd
+spec:
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: trident
+  source:
+    path: trident
+    repoURL: 'https://github.com/cloudcafetech/k8s-terraform'
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+```
