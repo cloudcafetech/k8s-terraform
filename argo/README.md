@@ -86,6 +86,32 @@ Use the following commands to delete Velero backups and data:
 
 ## Seal Secret
 
+- Using own keys
+
+```
+openssl req -x509 -nodes -newkey rsa:4096 -keyout $sstls.key -out $sstls.crt -subj "/CN=sealed-secret/O=sealed-secret"
+kubectl create secret tls sealed-secrets-key --cert=$sstls.crt --key=$sstls.key -n kube-system
+kubectl label secret -n kube-system sealed-secrets-key sealedsecrets.bitnami.com/sealed-secrets-key=active
+```
+
+- Installation
+
+```
+wget -q https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.26.3/controller.yaml
+sed -i 's/args: [[]]/args:/g' controller.yaml
+sed -i '/args/a --key-renew-period=0' controller.yaml
+sed -i 's/--key-renew-period=0/        - --key-renew-period=0/' controller.yaml
+```
+
+- Backup
+
+  ```kubectl get secret -n kube-system -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > backup-sealedSecret.key```
+
+- Recovery
+
+  ```kubeseal --recovery-unseal -f mysecret-sealed.yaml --recovery-private-key backup-sealedSecret.key -o yaml```
+
+- Client tool (kubeseal)
 ```
 wget https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.23.1/kubeseal-0.23.1-linux-amd64.tar.gz
 tar -xvzf kubeseal-0.23.1-linux-amd64.tar.gz kubeseal
