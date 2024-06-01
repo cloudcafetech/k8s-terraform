@@ -121,12 +121,9 @@ rm -rf kubeseal*
 kubectl get pods -n kube-system | grep sealed-secrets-controller
 kubeseal --fetch-cert > public-key-cert.pem
 ```
+- Seal Secret Uses 
 
-## Seal Secret Uses 
-
-```
-kubeseal --format=yaml --cert=public-key-cert.pem < secret-file-name.yaml > sealed-secret-name.yaml
-```
+```kubeseal --format=yaml --cert=public-key-cert.pem < secret-file-name.yaml > sealed-secret-name.yaml```
 
 ## Utilization as per NS
 
