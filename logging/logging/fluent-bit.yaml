@@ -233,7 +233,7 @@ spec:
         - /fluent-bit/bin/fluent-bit
         env:
         - name: FLUENT_LOKI_URL
-          value: http://loki.logging:3100/loki/api/v1/push
+          value: http://loki-gateway/loki/api/v1/push
         - name: FLUENT_SPLUNK_HOST
           value: "172.30.1.2"
         - name: FLUENT_SPLUNK_PORT
