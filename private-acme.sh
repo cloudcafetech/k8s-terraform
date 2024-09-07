@@ -72,7 +72,9 @@ EOF
 
 # Start Step-ca service 
 
-systemctl start step-ca && systemctl enable --now step-ca
+systemctl daemon-reload
+systemctl enable --now step-ca
+#systemctl restart step-ca
 #systemctl status step-ca
 
 # Verify
