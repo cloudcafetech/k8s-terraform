@@ -29,7 +29,8 @@ fi
 
 # Initializing step-ca
 
-step ca init --deployment-type=standalone --name=$CANM --dns=$HN --address=$HIP:$CA_PORT  --with-ca-url="https://$HIP:$CA_PORT" --provisioner=$EM --password-file=/etc/step-ca/password.txt
+#step ca init --deployment-type=standalone --name=$CANM --dns=$HN --address=$HIP:$CA_PORT  --with-ca-url="https://$HIP:$CA_PORT" --provisioner=$EM --password-file=/etc/step-ca/password.txt
+step ca init --deployment-type=standalone --name=$CANM --dns=$HIP --dns=$HN --address=$HIP:$CA_PORT  --provisioner=$EM --password-file=/etc/step-ca/password.txt
 sleep 5
 
 # Configuration of Step-ca
