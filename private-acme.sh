@@ -40,6 +40,8 @@ sudo useradd --system --home /etc/step-ca --shell /bin/false step
 sudo mv $(step path)/* /etc/step-ca
 sed -i "s|Step Online CA|$CANM|g" /etc/step-ca/config/ca.json
 sed -i "s|root/.step|etc/step-ca|g" /etc/step-ca/config/ca.json
+sed -i 's|Address": ""|Address": "SAMPLE"|g' /etc/step-ca/config/ca.json
+sed -i "s|SAMPLE|$HIP:$CA_PORT|g" /etc/step-ca/config/ca.json
 sed -i "s|root/.step|etc/step-ca|g" /etc/step-ca/config/defaults.json
 sudo chown -R step:step /etc/step-ca
 
