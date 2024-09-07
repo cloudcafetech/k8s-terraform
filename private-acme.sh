@@ -36,7 +36,6 @@ sleep 5
 
 step ca provisioner add acme --type ACME
 sudo useradd --system --home /etc/step-ca --shell /bin/false step
-#sudo setcap CAP_NET_BIND_SERVICE=+eip $(which step-ca)
 sudo mv $(step path)/* /etc/step-ca
 sed -i "s|Step Online CA|$CANM|g" /etc/step-ca/config/ca.json
 sed -i "s|root/.step|etc/step-ca|g" /etc/step-ca/config/ca.json
