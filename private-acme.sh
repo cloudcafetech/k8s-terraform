@@ -1,5 +1,7 @@
 #!/bin/bash
-# Setup Private ACME server (https://4sysops.com/archives/step-ca-running-your-own-certificate-authority-with-acme-support/)
+# Setup Private ACME server 
+# REF1 (https://4sysops.com/archives/step-ca-running-your-own-certificate-authority-with-acme-support/)
+# Ref2 (https://blog.bella.network/internal-acme-server/)
 
 
 # Installing step-ca
