@@ -47,6 +47,7 @@ metadata:
 spec:
   acme:
     server: https://172.30.1.2:8443/acme/acme/directory
+    #skipTLSVerify: true
     caBundle: $CAB
     privateKeySecretRef:
       name: private-ca
