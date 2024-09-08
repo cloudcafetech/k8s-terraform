@@ -62,6 +62,7 @@ kubectl create -f pcu.yaml
 - Sample app
 
 ```
+PHIP=$(kubectl get po -n ingress-nginx -o wide | grep ing | awk '{ print $6}')
 cat << EOF > sample.yaml
 apiVersion: v1
 kind: Namespace
@@ -114,10 +115,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - kuard.172.30.2.2.nip.io
+    - kuard.$PHIP.nip.io
     secretName: kuard.tls
   rules:
-  - host: kuard.172.30.2.2.nip.io
+  - host: kuard.$PHIP.nip.io
     http:
       paths:
       - path: /
