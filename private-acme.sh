@@ -29,19 +29,19 @@ fi
 
 # Initializing step-ca
 
-#step ca init --deployment-type=standalone --name=$CANM --dns=$HN --address=$HIP:$CA_PORT  --with-ca-url="https://$HIP:$CA_PORT" --provisioner=$EM --password-file=/etc/step-ca/password.txt
-step ca init --deployment-type=standalone --name=$CANM --dns=$HIP --dns=$HN --address=$HIP:$CA_PORT  --provisioner=$EM --password-file=/etc/step-ca/password.txt
+#step ca init --deployment-type=standalone --name=$CANM --dns=$HIP --dns=$HN --address=$HIP:$CA_PORT  --provisioner=$EM --password-file=/etc/step-ca/password.txt
+step ca init --deployment-type=standalone --name=$CANM --dns=$HIP --dns=$HN --address=$HIP:$CA_PORT  --provisioner=$EM --acme --password-file=/etc/step-ca/password.txt
 sleep 5
 
 # Configuration of Step-ca
 
-step ca provisioner add acme --type ACME
+#step ca provisioner add acme --type ACME
 sudo useradd --system --home /etc/step-ca --shell /bin/false step
 sudo mv $(step path)/* /etc/step-ca
 sed -i "s|Step Online CA|$CANM|g" /etc/step-ca/config/ca.json
 sed -i "s|root/.step|etc/step-ca|g" /etc/step-ca/config/ca.json
-sed -i 's|Address": ""|Address": "SAMPLE"|g' /etc/step-ca/config/ca.json
-sed -i "s|SAMPLE|$HIP:$CA_PORT|g" /etc/step-ca/config/ca.json
+#sed -i 's|Address": ""|Address": "SAMPLE"|g' /etc/step-ca/config/ca.json
+#sed -i "s|SAMPLE|$HIP:$CA_PORT|g" /etc/step-ca/config/ca.json
 sed -i "s|root/.step|etc/step-ca|g" /etc/step-ca/config/defaults.json
 sudo chown -R step:step /etc/step-ca
 
