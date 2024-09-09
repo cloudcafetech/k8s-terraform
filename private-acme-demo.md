@@ -139,13 +139,14 @@ spec:
 EOF
 
 kubectl create -f sample.yaml
+while ! kubectl get secrets kuard.tls -n kuard; do echo "Waiting for my secret. CTRL-C to exit."; sleep 1; done
 ```
 
 - Verify
 
 ```
 kubectl get secret kuard.tls -n kuard -o "jsonpath={.data['tls\.crt']}" | base64 -d | openssl x509 -issuer -noout
-kubectl get secret kuard.tls -n kuard -o "jsonpath={.data['tls\.crt']}" | base64 -d | openssl x509 -text -noout
 kubectl get secret kuard.tls -n kuard -o "jsonpath={.data['tls\.crt']}" | base64 -d | openssl x509 -dates -noout
+kubectl get secret kuard.tls -n kuard -o "jsonpath={.data['tls\.crt']}" | base64 -d | openssl x509 -text -noout
 kubectl get secret kuard.tls -n kuard -o "jsonpath={.data['tls\.crt']}" | base64 -d | openssl x509 -enddate -noout
 ```
