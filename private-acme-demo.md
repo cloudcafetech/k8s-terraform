@@ -60,6 +60,13 @@ EOF
 kubectl create -f pcu.yaml
 ```
 
+- Cluster Issuer status
+
+```
+kubectl get clusterissuer.cert-manager.io/private-ca
+kubectl get clusterissuer.cert-manager.io/private-ca -oyaml
+```
+
 - Sample app
 
 ```
