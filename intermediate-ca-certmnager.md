@@ -1,4 +1,4 @@
-### Self-signed Root CA & intermediate CA in k8s using cert-manager 
+### Self-signed Root & Intermediate CA in k8s using cert-manager 
 
 - Install Ngingx Ingress
 
