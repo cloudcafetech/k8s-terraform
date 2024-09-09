@@ -1,3 +1,29 @@
+### Self-signed Root CA & intermediate CA in k8s using cert-manager 
+
+- Install Ngingx Ingress
+
+```
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm repo update
+helm upgrade --install ingress-nginx ingress-nginx --set controller.hostNetwork=true \
+    --repo https://kubernetes.github.io/ingress-nginx \
+    --namespace ingress-nginx --create-namespace
+```
+- Install Cert Manager
+
+```
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm upgrade cert-manager jetstack/cert-manager \
+    --install \
+    --create-namespace \
+    --wait \
+    --namespace cert-manager \
+    --set installCRDs=true
+
+kubectl -n cert-manager get all
+kubectl api-resources --api-group=cert-manager.io
+```
 - Create self signed root CA
 
 ```
