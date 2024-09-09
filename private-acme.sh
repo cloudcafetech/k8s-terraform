@@ -35,7 +35,7 @@ sleep 5
 
 # Configuration of Step-ca
 
-#step ca provisioner add acme --type ACME
+#step ca provisioner add acme --type ACME --allow-renewal-after-expiry
 sudo useradd --system --home /etc/step-ca --shell /bin/false step
 sudo mv $(step path)/* /etc/step-ca
 sed -i "s|Step Online CA|$CANM|g" /etc/step-ca/config/ca.json
