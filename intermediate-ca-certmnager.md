@@ -112,4 +112,34 @@ kubectl get secret intermediate-ca-secret -n cert-manager -o jsonpath='{.data.tl
 openssl verify -CAfile <(kubectl -n cert-manager get secret root-ca-secret -o jsonpath='{.data.tls\.crt}' | base64 -d) <(kubectl -n cert-manager get secret intermediate-ca-secret -o jsonpath='{.data.tls\.crt}' | base64 -d)
 ```
 
+- Ingress (Service) Certificate
+
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echo-ingress
+  namespace: echoapp
+  annotations:
+    cert-manager.io/cluster-issuer: intermediate-ca-issuer
+    cert-manager.io/common-name: "echo.k8s.homelab.mydomain.org"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: echo.k8s.homelab.mydomain.org
+    http:
+      paths:
+        - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: echo-service
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - echo.k8s.homelab.mydomain.org
+  secretName: echo-cert-secret
+```
+
 [REF](https://raymii.org/s/tutorials/Self_signed_Root_CA_in_Kubernetes_with_k3s_cert-manager_and_traefik.html)
