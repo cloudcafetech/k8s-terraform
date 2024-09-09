@@ -139,7 +139,7 @@ spec:
 EOF
 
 kubectl create -f sample.yaml
-while ! kubectl get secrets kuard.tls -n kuard; do echo "Waiting for my secret. CTRL-C to exit."; sleep 1; done
+while ! kubectl get secrets kuard.tls -n kuard; do echo "Waiting for secret to be prepare. CTRL-C to exit."; sleep 1; done
 ```
 
 - Verify
