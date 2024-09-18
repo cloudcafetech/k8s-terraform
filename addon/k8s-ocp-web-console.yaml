@@ -46,8 +46,9 @@ spec:
       containers:
       - name: console-app
         # OCP K8s version map (https://gist.github.com/jeyaramashok/ebbd25f36338de4422fd584fea841c08)
-        # Image (https://quay.io/repository/openshift/origin-console?tab=tags)     
-        image: quay.io/openshift/origin-console:4.18
+        # Image (https://quay.io/repository/openshift/origin-console?tab=tags) 
+        # Till image (origin-console:4.11) Virtualizattion menu is available      
+        image: quay.io/openshift/origin-console:4.11
         env:
         - name: BRIDGE_USER_AUTH
           value: disabled # no authentication required
