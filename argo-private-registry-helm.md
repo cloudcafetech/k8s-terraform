@@ -161,6 +161,13 @@ EOF
 kubectl create -f cert-app.yaml
 ```
 
+- Test
+
+```
+kubectl get all -n cert-manager
+kubectl get crd | grep cert
+```
+
 - Extract images from helm template
 
 ```
