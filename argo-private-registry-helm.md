@@ -95,10 +95,15 @@ crane --insecure copy quay.io/jetstack/cert-manager-ctl:v1.13.3 172.30.1.2:5000/
 wget -q https://raw.githubusercontent.com/cloudcafetech/k8sdemo/main/argo.yaml
 kubectl create ns argocd
 kubectl create -f argo.yaml -n argocd
+
 kubectl wait po -l app.kubernetes.io/name=argocd-server --for=condition=Ready --timeout=5m -n argocd
 argopass=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 echo $argopass
 ```
+
+- Get Auth from docker
+
+``` cat /root/.docker/config.json ```
 
 - Modify containerd config.toml file for private registry as below example
 
@@ -156,7 +161,7 @@ EOF
 kubectl create -f cert-app.yaml
 ```
 
-- Extract images from helm 
+- Extract images from helm template
 
 ```
 CERT_VERSION=v1.13.3
