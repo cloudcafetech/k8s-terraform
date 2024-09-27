@@ -25,6 +25,7 @@ tar --zstd -cvf directory.tar.zst directory
 
 tar --zstd -cvf registry.tar.zst registry.tar
 
+```
 k8s.gcr.io/addon-resizer:1.7
 docker.io/grafana/fluent-bit-plugin-loki:main-e2ed1c0
 docker.io/grafana/loki:3.0.0
@@ -41,3 +42,4 @@ ghcr.io/stakater/reloader:v1.0.69
 docker.io/bitnami/sealed-secrets-controller:0.26.3
 docker.io/rancher/local-path-provisioner:v0.0.24
 docker.io/busybox:latest
+```
