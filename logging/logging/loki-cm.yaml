@@ -93,6 +93,10 @@ data:
         type: local
     runtime_config:
       file: /etc/loki/runtime-config/runtime-config.yaml
+    # To enable log retaintion comment out below three      
+    #table_manager:
+      #retention_deletes_enabled: true
+      #retention_period: 24h      
     schema_config:
       configs:
       - from: "2024-04-01"
