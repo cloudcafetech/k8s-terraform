@@ -6,6 +6,9 @@ metadata:
   labels:
     app: minio
 spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
   serviceName: minio
   replicas: 2
   #replicas: 3
